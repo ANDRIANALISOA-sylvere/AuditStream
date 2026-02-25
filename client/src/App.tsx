@@ -1,5 +1,11 @@
+import { AppRouter } from './router/AppRouter';
+
 function App() {
-  return <></>;
+  return (
+    <>
+      <AppRouter></AppRouter>
+    </>
+  );
 }
 
 export default App;
