@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              Int               @id @default(autoincrement())
+  username        String
+  email           String            @unique
+  role            Role              @default(USER)
+  auditVersements Audit_Versement[]
+  createdAt       DateTime          @default(now())
+}
+
+model Client {
+  numero_compte   String            @id
+  nom_client      String
+  solde           Decimal           @default(0)
+  versements      Versement[]
+  auditVersements Audit_Versement[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model Versement {
+  numero_versement Int               @id @default(autoincrement())
+  numero_cheque    String
+  montant          Decimal
+  client           Client            @relation(fields: [clientId], references: [numero_compte])
+  clientId         String
+  audits           Audit_Versement[]
+  createdAt        DateTime          @default(now())
+}
+
+model Audit_Versement {
+  id             Int        @id @default(autoincrement())
+  type_action    ActionType
+  date_operation DateTime   @default(now())
+
+  versement   Versement? @relation(fields: [versementId], references: [numero_versement])
+  versementId Int?
+
+  client        Client? @relation(fields: [numero_compte], references: [numero_compte])
+  numero_compte String?
+
+  nom_client      String
+  montant_ancien  Decimal?
+  montant_nouveau Decimal?
+
+  user          User? @relation(fields: [utilisateurId], references: [id])
+  utilisateurId Int?
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum ActionType {
+  INSERT
+  UPDATE
+  DELETE
+}
