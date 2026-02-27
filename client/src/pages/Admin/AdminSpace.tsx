@@ -18,13 +18,29 @@ import {
   Plus,
   RefreshCw,
   Shield,
+  ChevronDown,
+  User,
+  LogOut,
 } from 'lucide-react';
 import logo from '@/assets/Design sans titre.png';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useNavigate } from 'react-router';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/hooks/useAuth';
 
 const AdminSpace: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState('audit');
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
-  // Données simulées pour l'audit
   const auditLogs = [
     {
       id: 1,
@@ -83,7 +99,6 @@ const AdminSpace: React.FC = () => {
     },
   ];
 
-  // Statistiques d'audit
   const auditStats = {
     insertions: auditLogs.filter((log) => log.type_action === 'INSERT').length,
     modifications: auditLogs.filter((log) => log.type_action === 'UPDATE')
@@ -92,7 +107,6 @@ const AdminSpace: React.FC = () => {
       .length,
   };
 
-  // Données des clients
   const clients = [
     {
       id: 1,
@@ -124,7 +138,6 @@ const AdminSpace: React.FC = () => {
     },
   ];
 
-  // Données des versements
   const versements = [
     {
       id: 1,
@@ -177,9 +190,25 @@ const AdminSpace: React.FC = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  const getUserInitials = () => {
+    if (user?.username) {
+      return user.username
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    return 'AD';
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header Admin */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -205,29 +234,96 @@ const AdminSpace: React.FC = () => {
                   className="pl-9 pr-4 py-1 h-9 w-64 text-sm bg-gray-50 border-gray-200"
                 />
               </div>
+
               <button className="p-2 text-gray-400 hover:text-gray-600 relative">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
+
               <button className="p-2 text-gray-400 hover:text-gray-600">
                 <Settings className="w-5 h-5" />
               </button>
-              <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-200">
-                <div className="w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
-                  <Shield className="w-4 h-4 text-white" />
-                </div>
-                <div className="text-sm">
-                  <p className="font-medium text-gray-700">Admin Système</p>
-                  <p className="text-xs text-gray-400">Superviseur</p>
-                </div>
-              </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-200 hover:bg-gray-50 rounded-lg py-1 px-2 transition-colors">
+                    <Avatar className="h-10 w-10">
+                      {user?.picture ? (
+                        <AvatarImage src={user.picture} alt={user.username} />
+                      ) : (
+                        <AvatarFallback className="bg-indigo-600 text-white">
+                          {getUserInitials()}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="text-sm text-left">
+                      <p className="font-medium text-gray-700">
+                        {user?.username || 'Admin Système'}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        {user?.email || 'superviseur@auditstream.com'}
+                      </p>
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-gray-400" />
+                  </button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent className="w-64" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-10 w-10">
+                        {user?.picture ? (
+                          <AvatarImage src={user.picture} alt={user.username} />
+                        ) : (
+                          <AvatarFallback className="bg-indigo-600 text-white">
+                            {getUserInitials()}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {user?.username || 'Admin Système'}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user?.email || 'superviseur@auditstream.com'}
+                        </p>
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Mon profil</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Paramètres</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <Shield className="mr-2 h-4 w-4" />
+                      <span>Sécurité</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Se déconnecter</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* En-tête avec stats globales */}
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-gray-900">
             Tableau de bord supervision
@@ -237,7 +333,6 @@ const AdminSpace: React.FC = () => {
           </p>
         </div>
 
-        {/* Statistiques globales avec indicateurs temps réel */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">
@@ -306,7 +401,6 @@ const AdminSpace: React.FC = () => {
           </Card>
         </div>
 
-        {/* Filtres et actions */}
         <div className="flex items-center justify-between mb-6">
           <Tabs
             value={selectedTab}
@@ -351,7 +445,6 @@ const AdminSpace: React.FC = () => {
           </div>
         </div>
 
-        {/* Tableau d'audit */}
         <Card className="mb-8">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -432,7 +525,6 @@ const AdminSpace: React.FC = () => {
               </table>
             </div>
 
-            {/* Statistiques d'audit en bas du tableau */}
             <div className="mt-6 pt-4 border-t border-gray-100">
               <div className="flex items-center space-x-6">
                 <div className="flex items-center space-x-2">
@@ -458,9 +550,7 @@ const AdminSpace: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Section Clients et Versements */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Liste des clients */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg">Clients</CardTitle>
@@ -495,7 +585,6 @@ const AdminSpace: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Liste des versements récents */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg">Versements récents</CardTitle>

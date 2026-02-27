@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -12,15 +23,38 @@ import {
   Filter,
   Download,
   ChevronRight,
+  User,
+  LogOut,
+  HelpCircle,
+  Shield,
 } from 'lucide-react';
 import logo from '@/assets/Design sans titre.png';
+import { useAuth } from '@/hooks/useAuth';
 
 const ClientSpace: React.FC = () => {
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
   const [selectedAccount, setSelectedAccount] = useState(
     'FR76 3000 4001 2300 0012 3456 789',
   );
 
-  // Données simulées
+  const getUserInitials = () => {
+    if (user?.username) {
+      return user.username
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    return 'CL';
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
   const accounts = [
     {
       id: 1,
@@ -63,9 +97,10 @@ const ClientSpace: React.FC = () => {
     },
   ];
 
+  const totalBalance = accounts.reduce((sum, acc) => sum + acc.balance, 0);
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header avec navigation */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -82,45 +117,116 @@ const ClientSpace: React.FC = () => {
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
+
               <button className="p-2 text-gray-400 hover:text-gray-600">
                 <Settings className="w-5 h-5" />
               </button>
-              <div className="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-200">
-                <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-indigo-700">
-                    JD
-                  </span>
-                </div>
-                <div className="text-sm">
-                  <p className="font-medium text-gray-700">Jean Dupont</p>
-                  <p className="text-xs text-gray-400">Client depuis 2024</p>
-                </div>
-              </div>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center space-x-3 ml-4 pl-4 hover:bg-gray-50 rounded-lg py-1 px-2 transition-colors">
+                    <Avatar className="h-8 w-8">
+                      {user?.picture ? (
+                        <AvatarImage src={user.picture} alt={user.username} />
+                      ) : (
+                        <AvatarFallback className="bg-indigo-100 text-indigo-700">
+                          {getUserInitials()}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="text-sm text-left">
+                      <p className="font-medium text-gray-700">
+                        {user?.username || 'Client'}
+                      </p>
+                      <p className="text-xs text-gray-400">
+                        Client depuis 2024
+                      </p>
+                    </div>
+                  </button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent className="w-64" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex items-center space-x-3">
+                      <Avatar className="h-10 w-10">
+                        {user?.picture ? (
+                          <AvatarImage src={user.picture} alt={user.username} />
+                        ) : (
+                          <AvatarFallback className="bg-indigo-100 text-indigo-700">
+                            {getUserInitials()}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div className="flex flex-col space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {user?.username || 'Client'}
+                        </p>
+                        <p className="text-xs leading-none text-muted-foreground">
+                          {user?.email || 'client@example.com'}
+                        </p>
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Mon profil</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      <span>Mes comptes</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Paramètres</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer">
+                      <Shield className="mr-2 h-4 w-4" />
+                      <span>Sécurité</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuGroup>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem className="cursor-pointer">
+                    <HelpCircle className="mr-2 h-4 w-4" />
+                    <span>Aide</span>
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem
+                    className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                    onClick={handleLogout}
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Se déconnecter</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* En-tête avec bienvenue */}
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-gray-900">
-            Bonjour, Jean 👋
+            Bonjour, {user?.username?.split(' ')[0] || 'Jean'} 👋
           </h1>
           <p className="text-sm text-gray-500">
             Voici un aperçu de vos versements bancaires
           </p>
         </div>
 
-        {/* Cartes de résumé */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className='shadow-none hover:shadow-none border-2'>
+          <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-500">Solde total</p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    16 000,00 €
+                    {totalBalance.toLocaleString('fr-FR')} €
                   </p>
                   <p className="text-xs text-green-600 mt-1">+2.5% ce mois</p>
                 </div>
@@ -166,7 +272,6 @@ const ClientSpace: React.FC = () => {
           </Card>
         </div>
 
-        {/* Section des comptes */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <Card className="lg:col-span-1">
             <CardHeader>
@@ -206,7 +311,6 @@ const ClientSpace: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Versements récents */}
           <Card className="lg:col-span-2">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg">Versements récents</CardTitle>
@@ -221,53 +325,55 @@ const ClientSpace: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {recentVersements.map((versement) => (
-                  <div
-                    key={versement.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                          versement.type === 'crédit'
-                            ? 'bg-green-100'
-                            : 'bg-orange-100'
-                        }`}
-                      >
-                        {versement.type === 'crédit' ? (
-                          <ArrowDownLeft className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <ArrowUpRight className="w-4 h-4 text-orange-600" />
-                        )}
+                {recentVersements
+                  .filter((v) => v.compte === selectedAccount)
+                  .map((versement) => (
+                    <div
+                      key={versement.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            versement.type === 'crédit'
+                              ? 'bg-green-100'
+                              : 'bg-orange-100'
+                          }`}
+                        >
+                          {versement.type === 'crédit' ? (
+                            <ArrowDownLeft className="w-4 h-4 text-green-600" />
+                          ) : (
+                            <ArrowUpRight className="w-4 h-4 text-orange-600" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {versement.type === 'crédit'
+                              ? 'Versement reçu'
+                              : 'Versement émis'}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {versement.date} • Chèque {versement.cheque}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {versement.type === 'crédit'
-                            ? 'Versement reçu'
-                            : 'Versement émis'}
+                      <div className="text-right">
+                        <p
+                          className={`text-sm font-semibold ${
+                            versement.type === 'crédit'
+                              ? 'text-green-600'
+                              : 'text-orange-600'
+                          }`}
+                        >
+                          {versement.type === 'crédit' ? '+' : '-'}
+                          {versement.montant.toLocaleString('fr-FR')} €
                         </p>
                         <p className="text-xs text-gray-400">
-                          {versement.date} • Chèque {versement.cheque}
+                          {versement.compte.slice(-4)}
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p
-                        className={`text-sm font-semibold ${
-                          versement.type === 'crédit'
-                            ? 'text-green-600'
-                            : 'text-orange-600'
-                        }`}
-                      >
-                        {versement.type === 'crédit' ? '+' : '-'}
-                        {versement.montant} €
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {versement.compte.slice(-4)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  ))}
               </div>
 
               <Button
@@ -281,7 +387,6 @@ const ClientSpace: React.FC = () => {
           </Card>
         </div>
 
-        {/* Actions rapides */}
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Actions rapides</CardTitle>

@@ -1,19 +1,49 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import google from '@/assets/icons8-google-50.svg';
 import logo from '@/assets/Design sans titre.png';
+import { useAuthStore } from '@/store/authStore';
+import { AlertCircle } from 'lucide-react';
+import { redirectToGoogle } from '@/api/auth';
 
 const LoginForm: React.FC = () => {
+  const navigate = useNavigate();
+  const { isAuthenticated, user, error: storeError } = useAuthStore();
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const error = params.get('error');
+    const message = params.get('message');
+
+    if (error && message) {
+      setLoginError(decodeURIComponent(message));
+      window.history.replaceState({}, document.title, '/login');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (user.role === 'ADMIN') {
+        navigate('/');
+      } else {
+        navigate('/client');
+      }
+    }
+  }, [isAuthenticated, user, navigate]);
+
   const handleGoogleLogin = () => {
-    console.log('Connexion avec Google');
+    setLoginError(null);
+    redirectToGoogle();
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white p-4">
       <Card className="w-full max-w-sm border-0 shadow-none">
         <CardContent className="pt-8 pb-6 px-0 flex flex-col items-center">
-          {/* Logo */}
           <div className="mb-6">
             <img
               src={logo}
@@ -22,7 +52,6 @@ const LoginForm: React.FC = () => {
             />
           </div>
 
-          {/* Nom de l'application */}
           <h1 className="text-2xl font-semibold text-gray-900 mb-1">
             AuditStream
           </h1>
@@ -31,7 +60,25 @@ const LoginForm: React.FC = () => {
             Plateforme de versements bancaires
           </p>
 
-          {/* Bouton Google */}
+          {(loginError || storeError) && (
+            <Alert variant="destructive" className="mb-4 w-80">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {loginError || storeError || 'Accès non autorisé'}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {loginError?.includes('not been created') && (
+            <div className="mb-4 w-80 text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
+              <p className="font-medium">Compte non reconnu</p>
+              <p className="text-xs mt-1">
+                Votre compte Google n'a pas été créé par un administrateur.
+                Veuillez contacter votre administrateur pour obtenir l'accès.
+              </p>
+            </div>
+          )}
+
           <Button
             onClick={handleGoogleLogin}
             variant="outline"
@@ -41,7 +88,6 @@ const LoginForm: React.FC = () => {
             Accéder à mon espace
           </Button>
 
-          {/* Message de sécurité */}
           <div className="mt-6 text-center">
             <p className="text-xs text-gray-400 flex items-center justify-center">
               <svg
@@ -61,7 +107,6 @@ const LoginForm: React.FC = () => {
             </p>
           </div>
 
-          {/* Footer simple */}
           <p className="mt-8 text-[10px] text-gray-200">
             © 2026 AuditStream • Versements bancaires
           </p>
