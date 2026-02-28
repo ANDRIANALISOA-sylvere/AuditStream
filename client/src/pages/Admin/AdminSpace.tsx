@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,9 @@ import {
   ChevronDown,
   User,
   LogOut,
+  Mail,
+  Calendar,
+  MoreVertical,
 } from 'lucide-react';
 import logo from '@/assets/Design sans titre.png';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -34,12 +37,47 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
+import { useUserStore } from '@/store/userStore';
+import { Role } from '@/types/auth.types';
+import { format } from 'date-fns';
+import { fr } from 'date-fns/locale';
+import { UserDialog } from '@/components/common/UserDialog';
 
 const AdminSpace: React.FC = () => {
-  const [selectedTab, setSelectedTab] = useState('audit');
+  const [selectedTab, setSelectedTab] = useState('clients');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+
+  const {
+    users,
+    isLoading,
+    error,
+    fetchUsers,
+    addUser,
+    removeUser,
+    updateUserRole,
+  } = useUserStore();
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const filteredUsers = users.filter(
+    (u) =>
+      u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
   const auditLogs = [
     {
@@ -107,37 +145,6 @@ const AdminSpace: React.FC = () => {
       .length,
   };
 
-  const clients = [
-    {
-      id: 1,
-      nom: 'Jean Dupont',
-      compte: 'FR76 3000 4001 2300 0012 3456 789',
-      solde: 12500.0,
-      versements: 8,
-    },
-    {
-      id: 2,
-      nom: 'Marie Martin',
-      compte: 'FR76 3000 4001 2300 0012 3456 790',
-      solde: 3500.0,
-      versements: 3,
-    },
-    {
-      id: 3,
-      nom: 'Pierre Bernard',
-      compte: 'FR76 3000 4001 2300 0012 3456 791',
-      solde: 8200.0,
-      versements: 5,
-    },
-    {
-      id: 4,
-      nom: 'Sophie Dubois',
-      compte: 'FR76 3000 4001 2300 0012 3456 792',
-      solde: 4300.0,
-      versements: 4,
-    },
-  ];
-
   const versements = [
     {
       id: 1,
@@ -195,7 +202,16 @@ const AdminSpace: React.FC = () => {
     navigate('/login');
   };
 
-  const getUserInitials = () => {
+  const getUserInitials = (username: string) => {
+    return username
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const getCurrentUserInitials = () => {
     if (user?.username) {
       return user.username
         .split(' ')
@@ -207,8 +223,42 @@ const AdminSpace: React.FC = () => {
     return 'AD';
   };
 
+  const handleAddUser = async (data: {
+    email: string;
+    username: string;
+    role: Role;
+  }) => {
+    try {
+      await addUser(data);
+      setDialogOpen(false);
+    } catch (error) {
+      console.error('Error adding user:', error);
+    }
+  };
+
+  const handleDeleteUser = async (id: number) => {
+    if (
+      window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')
+    ) {
+      try {
+        await removeUser(id);
+      } catch (error) {
+        console.error('Error deleting user:', error);
+      }
+    }
+  };
+
+  const handleRoleChange = async (id: number, newRole: Role) => {
+    try {
+      await updateUserRole(id, newRole);
+    } catch (error) {
+      console.error('Error changing role:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -252,7 +302,7 @@ const AdminSpace: React.FC = () => {
                         <AvatarImage src={user.picture} alt={user.username} />
                       ) : (
                         <AvatarFallback className="bg-indigo-600 text-white">
-                          {getUserInitials()}
+                          {getCurrentUserInitials()}
                         </AvatarFallback>
                       )}
                     </Avatar>
@@ -276,7 +326,7 @@ const AdminSpace: React.FC = () => {
                           <AvatarImage src={user.picture} alt={user.username} />
                         ) : (
                           <AvatarFallback className="bg-indigo-600 text-white">
-                            {getUserInitials()}
+                            {getCurrentUserInitials()}
                           </AvatarFallback>
                         )}
                       </Avatar>
@@ -324,6 +374,7 @@ const AdminSpace: React.FC = () => {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* En-tête */}
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-gray-900">
             Tableau de bord supervision
@@ -333,6 +384,7 @@ const AdminSpace: React.FC = () => {
           </p>
         </div>
 
+        {/* Statistiques */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <Card>
             <CardContent className="pt-6">
@@ -389,9 +441,13 @@ const AdminSpace: React.FC = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-500">Clients actifs</p>
-                  <p className="text-2xl font-semibold text-gray-900">12</p>
-                  <p className="text-xs text-gray-500 mt-1">4 en ligne</p>
+                  <p className="text-sm text-gray-500">Utilisateurs</p>
+                  <p className="text-2xl font-semibold text-gray-900">
+                    {users.length}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {users.filter((u) => u.role === Role.ADMIN).length} admins
+                  </p>
                 </div>
                 <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
                   <Users className="w-5 h-5 text-purple-600" />
@@ -401,6 +457,7 @@ const AdminSpace: React.FC = () => {
           </Card>
         </div>
 
+        {/* Tabs et filtres */}
         <div className="flex items-center justify-between mb-6">
           <Tabs
             value={selectedTab}
@@ -408,218 +465,395 @@ const AdminSpace: React.FC = () => {
             className="w-auto"
           >
             <TabsList>
+              <TabsTrigger value="clients" className="flex items-center">
+                <Users className="w-4 h-4 mr-2" />
+                Utilisateurs ({users.length})
+              </TabsTrigger>
               <TabsTrigger value="audit" className="flex items-center">
                 <Activity className="w-4 h-4 mr-2" />
                 Audit trail
-              </TabsTrigger>
-              <TabsTrigger value="clients" className="flex items-center">
-                <Users className="w-4 h-4 mr-2" />
-                Clients
               </TabsTrigger>
               <TabsTrigger value="versements" className="flex items-center">
                 <CreditCard className="w-4 h-4 mr-2" />
                 Versements
               </TabsTrigger>
-              <TabsTrigger value="alertes" className="flex items-center">
-                <AlertTriangle className="w-4 h-4 mr-2" />
-                Alertes
-              </TabsTrigger>
             </TabsList>
           </Tabs>
 
           <div className="flex items-center space-x-3">
-            <select className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white">
-              <option value="today">Aujourd'hui</option>
-              <option value="week">Cette semaine</option>
-              <option value="month">Ce mois</option>
-              <option value="custom">Personnalisé</option>
-            </select>
-            <Button variant="outline" size="sm">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Rechercher un utilisateur..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 pr-4 py-1 h-9 w-64 text-sm"
+              />
+            </div>
+            <Button variant="outline" size="sm" onClick={() => fetchUsers()}>
               <RefreshCw className="w-4 h-4 mr-2" />
               Actualiser
             </Button>
-            <Button variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Exporter
+            <Button size="sm" onClick={() => setDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Ajouter
             </Button>
           </div>
         </div>
 
-        <Card className="mb-8">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">
-                Journal d'audit des versements
-              </CardTitle>
-              <Badge variant="outline" className="bg-gray-50">
-                Temps réel
-                <span className="ml-2 relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                </span>
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 font-medium text-gray-500">
-                      Action
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-500">
-                      Date/Heure
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-500">
-                      N° Versement
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-500">
-                      N° Compte
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-500">
-                      Client
-                    </th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">
-                      Ancien montant
-                    </th>
-                    <th className="text-right py-3 px-4 font-medium text-gray-500">
-                      Nouveau montant
-                    </th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-500">
-                      Utilisateur
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {auditLogs.map((log) => (
-                    <tr
-                      key={log.id}
-                      className="border-b border-gray-100 hover:bg-gray-50"
+        {/* Contenu des tabs */}
+        {selectedTab === 'clients' && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Liste des utilisateurs</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {error && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Erreur</AlertTitle>
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredUsers.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                     >
-                      <td className="py-3 px-4">
-                        {getActionBadge(log.type_action)}
-                      </td>
-                      <td className="py-3 px-4 text-gray-600">
-                        {log.date_operation}
-                      </td>
-                      <td className="py-3 px-4 font-mono text-xs">
-                        {log.n_versement}
-                      </td>
-                      <td className="py-3 px-4 font-mono text-xs">
-                        {log.n_compte.slice(0, 10)}...
-                      </td>
-                      <td className="py-3 px-4">{log.nom_client}</td>
-                      <td className="py-3 px-4 text-right text-gray-500">
-                        {log.montant_ancien ? `${log.montant_ancien} €` : '-'}
-                      </td>
-                      <td className="py-3 px-4 text-right font-medium">
-                        {log.montant_nouv ? `${log.montant_nouv} €` : '-'}
-                      </td>
-                      <td className="py-3 px-4 text-gray-600">
-                        {log.utilisateur}
-                      </td>
-                    </tr>
+                      <div className="flex items-center space-x-4">
+                        <Avatar className="h-10 w-10">
+                          {user.picture ? (
+                            <AvatarImage
+                              src={user.picture}
+                              alt={user.username}
+                            />
+                          ) : (
+                            <AvatarFallback className="bg-indigo-100 text-indigo-700">
+                              {getUserInitials(user.username)}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <p className="font-medium text-gray-900">
+                              {user.username}
+                            </p>
+                            <Badge
+                              variant={
+                                user.role === Role.ADMIN
+                                  ? 'default'
+                                  : 'secondary'
+                              }
+                              className={
+                                user.role === Role.ADMIN
+                                  ? 'bg-purple-100 text-purple-700 border-purple-200'
+                                  : 'bg-gray-100 text-gray-700 border-gray-200'
+                              }
+                            >
+                              {user.role}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center space-x-4 mt-1">
+                            <div className="flex items-center text-xs text-gray-400">
+                              <Mail className="w-3 h-3 mr-1" />
+                              {user.email}
+                            </div>
+                            {/* <div className="flex items-center text-xs text-gray-400">
+                              <Calendar className="w-3 h-3 mr-1" />
+                              {format(new Date(user.createdAt), 'dd MMM yyyy', {
+                                locale: fr,
+                              })}
+                            </div> */}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <Select
+                          value={user.role}
+                          onValueChange={(value: Role) =>
+                            handleRoleChange(user.id, value)
+                          }
+                        >
+                          <SelectTrigger className="w-32 h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={Role.USER}>
+                              Utilisateur
+                            </SelectItem>
+                            <SelectItem value={Role.ADMIN}>Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem className="cursor-pointer">
+                              <Edit className="mr-2 h-4 w-4" />
+                              Modifier
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="cursor-pointer text-red-600"
+                              onClick={() => handleDeleteUser(user.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Supprimer
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
-            </div>
 
-            <div className="mt-6 pt-4 border-t border-gray-100">
-              <div className="flex items-center space-x-6">
-                <div className="flex items-center space-x-2">
-                  <Badge className="bg-green-100 text-green-700">INSERT</Badge>
-                  <span className="text-sm text-gray-600">
-                    {auditStats.insertions} opérations
-                  </span>
+                  {filteredUsers.length === 0 && (
+                    <div className="text-center py-8 text-gray-400">
+                      Aucun utilisateur trouvé
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Badge className="bg-blue-100 text-blue-700">UPDATE</Badge>
-                  <span className="text-sm text-gray-600">
-                    {auditStats.modifications} opérations
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {selectedTab === 'audit' && (
+          <Card className="mb-8">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">
+                  Journal d'audit des versements
+                </CardTitle>
+                <Badge variant="outline" className="bg-gray-50">
+                  Temps réel
+                  <span className="ml-2 relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                   </span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Badge className="bg-red-100 text-red-700">DELETE</Badge>
-                  <span className="text-sm text-gray-600">
-                    {auditStats.suppressions} opérations
-                  </span>
-                </div>
+                </Badge>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Clients</CardTitle>
-              <Button variant="ghost" size="sm">
-                Voir tout
-              </Button>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {clients.map((client) => (
-                  <div
-                    key={client.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900">{client.nom}</p>
-                      <p className="text-xs text-gray-400 font-mono">
-                        {client.compte.slice(0, 10)}...
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-gray-900">
-                        {client.solde} €
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {client.versements} versements
-                      </p>
-                    </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">
+                        Action
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">
+                        Date/Heure
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">
+                        N° Versement
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">
+                        N° Compte
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">
+                        Client
+                      </th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-500">
+                        Ancien montant
+                      </th>
+                      <th className="text-right py-3 px-4 font-medium text-gray-500">
+                        Nouveau montant
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-500">
+                        Utilisateur
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {auditLogs.map((log) => (
+                      <tr
+                        key={log.id}
+                        className="border-b border-gray-100 hover:bg-gray-50"
+                      >
+                        <td className="py-3 px-4">
+                          {getActionBadge(log.type_action)}
+                        </td>
+                        <td className="py-3 px-4 text-gray-600">
+                          {log.date_operation}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-xs">
+                          {log.n_versement}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-xs">
+                          {log.n_compte.slice(0, 10)}...
+                        </td>
+                        <td className="py-3 px-4">{log.nom_client}</td>
+                        <td className="py-3 px-4 text-right text-gray-500">
+                          {log.montant_ancien ? `${log.montant_ancien} €` : '-'}
+                        </td>
+                        <td className="py-3 px-4 text-right font-medium">
+                          {log.montant_nouv ? `${log.montant_nouv} €` : '-'}
+                        </td>
+                        <td className="py-3 px-4 text-gray-600">
+                          {log.utilisateur}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-gray-100">
+                <div className="flex items-center space-x-6">
+                  <div className="flex items-center space-x-2">
+                    <Badge className="bg-green-100 text-green-700">
+                      INSERT
+                    </Badge>
+                    <span className="text-sm text-gray-600">
+                      {auditStats.insertions} opérations
+                    </span>
                   </div>
-                ))}
+                  <div className="flex items-center space-x-2">
+                    <Badge className="bg-blue-100 text-blue-700">UPDATE</Badge>
+                    <span className="text-sm text-gray-600">
+                      {auditStats.modifications} opérations
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Badge className="bg-red-100 text-red-700">DELETE</Badge>
+                    <span className="text-sm text-gray-600">
+                      {auditStats.suppressions} opérations
+                    </span>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
+        )}
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Versements récents</CardTitle>
-              <Button variant="ghost" size="sm">
-                Voir tout
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {versements.map((versement) => (
-                  <div
-                    key={versement.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {versement.numero}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        Chèque {versement.cheque}
-                      </p>
+        {selectedTab === 'versements' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg">Clients</CardTitle>
+                <Button variant="ghost" size="sm">
+                  Voir tout
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {[
+                    {
+                      id: 1,
+                      nom: 'Jean Dupont',
+                      compte: 'FR76 3000 4001 2300 0012 3456 789',
+                      solde: 12500.0,
+                      versements: 8,
+                    },
+                    {
+                      id: 2,
+                      nom: 'Marie Martin',
+                      compte: 'FR76 3000 4001 2300 0012 3456 790',
+                      solde: 3500.0,
+                      versements: 3,
+                    },
+                    {
+                      id: 3,
+                      nom: 'Pierre Bernard',
+                      compte: 'FR76 3000 4001 2300 0012 3456 791',
+                      solde: 8200.0,
+                      versements: 5,
+                    },
+                    {
+                      id: 4,
+                      nom: 'Sophie Dubois',
+                      compte: 'FR76 3000 4001 2300 0012 3456 792',
+                      solde: 4300.0,
+                      versements: 4,
+                    },
+                  ].map((client) => (
+                    <div
+                      key={client.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {client.nom}
+                        </p>
+                        <p className="text-xs text-gray-400 font-mono">
+                          {client.compte.slice(0, 10)}...
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-gray-900">
+                          {client.solde} €
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {client.versements} versements
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-green-600">
-                        +{versement.montant} €
-                      </p>
-                      <p className="text-xs text-gray-400">{versement.date}</p>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-lg">Versements récents</CardTitle>
+                <Button variant="ghost" size="sm">
+                  Voir tout
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {versements.map((versement) => (
+                    <div
+                      key={versement.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {versement.numero}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Chèque {versement.cheque}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-green-600">
+                          +{versement.montant} €
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {versement.date}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </main>
+
+      {/* Dialogue d'ajout d'utilisateur */}
+      <UserDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSubmit={handleAddUser}
+        isLoading={isLoading}
+      />
     </div>
   );
 };
