@@ -73,7 +73,7 @@ export const ClientDialog: React.FC<ClientDialogProps> = ({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="solde">Solde initial (€)</Label>
+              <Label htmlFor="solde">Solde initial (Ar)</Label>
               <Input
                 id="solde"
                 type="number"

@@ -11,22 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  ArrowDownLeft,
-  ArrowUpRight,
   CreditCard,
   Users,
-  Bell,
-  Settings,
   Search,
-  Filter,
-  Download,
-  ChevronRight,
   User,
   LogOut,
-  HelpCircle,
-  Shield,
   Plus,
   RefreshCw,
   Building,
@@ -41,6 +31,7 @@ import { format } from 'date-fns';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { ClientDialog } from '@/components/common/ClientDialog';
+import { AvatarWithFallback } from '@/components/common/AvatarWithFallback';
 
 const ClientSpace: React.FC = () => {
   const navigate = useNavigate();
@@ -127,27 +118,14 @@ const ClientSpace: React.FC = () => {
             </div>
 
             <div className="flex items-center space-x-4">
-              <button className="p-2 text-gray-400 hover:text-gray-600 relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-
-              <button className="p-2 text-gray-400 hover:text-gray-600">
-                <Settings className="w-5 h-5" />
-              </button>
-
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center space-x-3 ml-4 pl-4 hover:bg-gray-50 rounded-lg py-1 px-2 transition-colors">
-                    <Avatar className="h-8 w-8">
-                      {user?.picture ? (
-                        <AvatarImage src={user.picture} alt={user.username} />
-                      ) : (
-                        <AvatarFallback className="bg-indigo-100 text-indigo-700">
-                          {getUserInitials()}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
+                    <AvatarWithFallback
+                      src={user?.picture}
+                      alt={user?.username || 'Utilisateur'}
+                      fallback={getUserInitials()}
+                    />
                     <div className="text-sm text-left">
                       <p className="font-medium text-gray-700">
                         {user?.username || 'Client'}
@@ -162,21 +140,17 @@ const ClientSpace: React.FC = () => {
                 <DropdownMenuContent className="w-64" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex items-center space-x-3">
-                      <Avatar className="h-10 w-10">
-                        {user?.picture ? (
-                          <AvatarImage src={user.picture} alt={user.username} />
-                        ) : (
-                          <AvatarFallback className="bg-indigo-100 text-indigo-700">
-                            {getUserInitials()}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
+                      <AvatarWithFallback
+                        src={user?.picture}
+                        alt={user?.username || 'Utilisateur'}
+                        fallback={getUserInitials()}
+                      />
                       <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">
                           {user?.username || 'Client'}
                         </p>
                         <p className="text-xs leading-none text-muted-foreground">
-                          {user?.email || 'client@example.com'}
+                          {user?.email}
                         </p>
                       </div>
                     </div>
@@ -188,26 +162,9 @@ const ClientSpace: React.FC = () => {
                       <User className="mr-2 h-4 w-4" />
                       <span>Mon profil</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Building className="mr-2 h-4 w-4" />
-                      <span>Mes clients</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Paramètres</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Shield className="mr-2 h-4 w-4" />
-                      <span>Sécurité</span>
-                    </DropdownMenuItem>
                   </DropdownMenuGroup>
 
                   <DropdownMenuSeparator />
-
-                  <DropdownMenuItem className="cursor-pointer">
-                    <HelpCircle className="mr-2 h-4 w-4" />
-                    <span>Aide</span>
-                  </DropdownMenuItem>
 
                   <DropdownMenuItem
                     className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
@@ -260,10 +217,10 @@ const ClientSpace: React.FC = () => {
                 <div>
                   <p className="text-sm text-gray-500">Solde total</p>
                   <p className="text-2xl font-semibold text-gray-900">
-                    {stats.soldeTotal.toLocaleString('fr-FR')} €
+                    {stats.soldeTotal.toLocaleString('fr-FR')} Ar
                   </p>
                   <p className="text-xs text-green-600 mt-1">
-                    Moyenne: {stats.soldeMoyen.toLocaleString('fr-FR')} €
+                    Moyenne: {stats.soldeMoyen.toLocaleString('fr-FR')} Ar
                   </p>
                 </div>
                 <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
@@ -382,7 +339,7 @@ const ClientSpace: React.FC = () => {
                       <div className="flex items-center gap-4">
                         <div className="text-right">
                           <p className="font-semibold text-gray-900">
-                            {client.solde.toLocaleString('fr-FR')} €
+                            {client.solde.toLocaleString('fr-FR')} Ar
                           </p>
                           {client.createdAt && (
                             <p className="text-xs text-gray-400">
@@ -417,48 +374,6 @@ const ClientSpace: React.FC = () => {
             </CardContent>
           </Card>
         )}
-
-        {/* Actions rapides */}
-        <div className="mt-8">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Actions rapides</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Button
-                  variant="outline"
-                  className="h-auto py-4 flex flex-col items-center space-y-2"
-                  onClick={() => setDialogOpen(true)}
-                >
-                  <Plus className="w-5 h-5 text-gray-600" />
-                  <span className="text-sm">Nouveau client</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-auto py-4 flex flex-col items-center space-y-2"
-                >
-                  <Download className="w-5 h-5 text-gray-600" />
-                  <span className="text-sm">Exporter la liste</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-auto py-4 flex flex-col items-center space-y-2"
-                >
-                  <Filter className="w-5 h-5 text-gray-600" />
-                  <span className="text-sm">Filtrer</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="h-auto py-4 flex flex-col items-center space-y-2"
-                >
-                  <RefreshCw className="w-5 h-5 text-gray-600" />
-                  <span className="text-sm">Actualiser</span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </main>
 
       {/* Dialogue d'ajout de client */}

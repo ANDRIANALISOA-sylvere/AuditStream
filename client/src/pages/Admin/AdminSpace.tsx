@@ -5,10 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import {
-  Bell,
-  Settings,
   Search,
-  Download,
   Users,
   CreditCard,
   Activity,
@@ -17,16 +14,13 @@ import {
   Edit,
   Plus,
   RefreshCw,
-  Shield,
   ChevronDown,
   User,
   LogOut,
   Mail,
-  Calendar,
   MoreVertical,
 } from 'lucide-react';
 import logo from '@/assets/Design sans titre.png';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router';
 import {
   DropdownMenu,
@@ -48,9 +42,8 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useAuth } from '@/hooks/useAuth';
 import { useUserStore } from '@/store/userStore';
 import { Role } from '@/types/auth.types';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
 import { UserDialog } from '@/components/common/UserDialog';
+import { AvatarWithFallback } from '@/components/common/AvatarWithFallback';
 
 const AdminSpace: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState('clients');
@@ -256,6 +249,17 @@ const AdminSpace: React.FC = () => {
     }
   };
 
+  const getUserRole = (role: Role) => {
+    switch (role) {
+      case 'ADMIN':
+        return 'Administrateur';
+      case 'USER':
+        return 'Utilisateur';
+      default:
+        return 'Utilisateur';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -277,35 +281,14 @@ const AdminSpace: React.FC = () => {
             </div>
 
             <div className="flex items-center space-x-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder="Rechercher..."
-                  className="pl-9 pr-4 py-1 h-9 w-64 text-sm bg-gray-50 border-gray-200"
-                />
-              </div>
-
-              <button className="p-2 text-gray-400 hover:text-gray-600 relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
-
-              <button className="p-2 text-gray-400 hover:text-gray-600">
-                <Settings className="w-5 h-5" />
-              </button>
-
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center space-x-3 ml-4 pl-4 border-l border-gray-200 hover:bg-gray-50 rounded-lg py-1 px-2 transition-colors">
-                    <Avatar className="h-10 w-10">
-                      {user?.picture ? (
-                        <AvatarImage src={user.picture} alt={user.username} />
-                      ) : (
-                        <AvatarFallback className="bg-indigo-600 text-white">
-                          {getCurrentUserInitials()}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
+                  <button className="flex items-center space-x-3 ml-4 pl-4 hover:bg-gray-50 rounded-lg py-1 px-2 transition-colors">
+                    <AvatarWithFallback
+                      src={user?.picture}
+                      alt={user?.username || 'Admin'}
+                      fallback={getCurrentUserInitials()}
+                    />
                     <div className="text-sm text-left">
                       <p className="font-medium text-gray-700">
                         {user?.username || 'Admin Système'}
@@ -321,15 +304,11 @@ const AdminSpace: React.FC = () => {
                 <DropdownMenuContent className="w-64" align="end" forceMount>
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex items-center space-x-3">
-                      <Avatar className="h-10 w-10">
-                        {user?.picture ? (
-                          <AvatarImage src={user.picture} alt={user.username} />
-                        ) : (
-                          <AvatarFallback className="bg-indigo-600 text-white">
-                            {getCurrentUserInitials()}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
+                      <AvatarWithFallback
+                        src={user?.picture}
+                        alt={user?.username || 'Admin'}
+                        fallback={getCurrentUserInitials()}
+                      />
                       <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium leading-none">
                           {user?.username || 'Admin Système'}
@@ -346,14 +325,6 @@ const AdminSpace: React.FC = () => {
                     <DropdownMenuItem className="cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
                       <span>Mon profil</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Paramètres</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="cursor-pointer">
-                      <Shield className="mr-2 h-4 w-4" />
-                      <span>Sécurité</span>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
 
@@ -528,18 +499,11 @@ const AdminSpace: React.FC = () => {
                       className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                     >
                       <div className="flex items-center space-x-4">
-                        <Avatar className="h-10 w-10">
-                          {user.picture ? (
-                            <AvatarImage
-                              src={user.picture}
-                              alt={user.username}
-                            />
-                          ) : (
-                            <AvatarFallback className="bg-indigo-100 text-indigo-700">
-                              {getUserInitials(user.username)}
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
+                        <AvatarWithFallback
+                          src={user.picture}
+                          alt={user.username}
+                          fallback={getUserInitials(user.username)}
+                        />
                         <div>
                           <div className="flex items-center space-x-2">
                             <p className="font-medium text-gray-900">
@@ -557,7 +521,7 @@ const AdminSpace: React.FC = () => {
                                   : 'bg-gray-100 text-gray-700 border-gray-200'
                               }
                             >
-                              {user.role}
+                              {getUserRole(user.role)}
                             </Badge>
                           </div>
                           <div className="flex items-center space-x-4 mt-1">
@@ -565,12 +529,6 @@ const AdminSpace: React.FC = () => {
                               <Mail className="w-3 h-3 mr-1" />
                               {user.email}
                             </div>
-                            {/* <div className="flex items-center text-xs text-gray-400">
-                              <Calendar className="w-3 h-3 mr-1" />
-                              {format(new Date(user.createdAt), 'dd MMM yyyy', {
-                                locale: fr,
-                              })}
-                            </div> */}
                           </div>
                         </div>
                       </div>
