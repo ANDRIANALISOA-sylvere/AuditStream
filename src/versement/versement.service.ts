@@ -16,13 +16,34 @@ export class VersementService {
   }
 
   async create(dto: CreateVersementDto, userId: number): Promise<Versement> {
-    return await this.prisma.versement.create({
-      data: {
-        numero_versement: dto.numero_versement,
-        numero_cheque: dto.numero_cheque,
-        montant: dto.montant,
-        clientId: dto.clientId,
-      },
+    return await this.prisma.$transaction(async (tx) => {
+      const client = await tx.client.findUnique({
+        where: { numero_compte: dto.clientId },
+      });
+
+      if (!client) {
+        throw new NotFoundException(`Client ${dto.clientId} introuvable`);
+      }
+
+      const versement = await tx.versement.create({
+        data: {
+          numero_versement: dto.numero_versement,
+          numero_cheque: dto.numero_cheque,
+          montant: dto.montant,
+          clientId: dto.clientId,
+        },
+      });
+
+      await tx.client.update({
+        where: { numero_compte: dto.clientId },
+        data: {
+          solde: {
+            increment: dto.montant,
+          },
+        },
+      });
+
+      return versement;
     });
   }
 
@@ -31,34 +52,63 @@ export class VersementService {
     dto: UpdateVersementDto,
     userId: number,
   ): Promise<Versement> {
-    const versement = await this.prisma.versement.findUnique({
-      where: { numero_versement },
-    });
+    return await this.prisma.$transaction(async (tx) => {
+      const versement = await tx.versement.findUnique({
+        where: { numero_versement: numero_versement },
+      });
 
-    if (!versement) {
-      throw new NotFoundException(`Versement ${numero_versement} introuvable`);
-    }
+      if (!versement) {
+        throw new NotFoundException(
+          `Versement ${numero_versement} introuvable`,
+        );
+      }
 
-    return await this.prisma.versement.update({
-      where: { numero_versement },
-      data: {
-        ...(dto.numero_cheque && { numero_cheque: dto.numero_cheque }),
-        ...(dto.montant && { montant: dto.montant }),
-      },
+      if (dto.montant && dto.montant !== Number(versement.montant)) {
+        const difference = dto.montant - Number(versement.montant);
+        await tx.client.update({
+          where: { numero_compte: versement.clientId },
+          data: {
+            solde: {
+              increment: difference,
+            },
+          },
+        });
+      }
+
+      return await tx.versement.update({
+        where: { numero_versement: numero_versement },
+        data: {
+          ...(dto.numero_cheque && { numero_cheque: dto.numero_cheque }),
+          ...(dto.montant && { montant: dto.montant }),
+        },
+      });
     });
   }
 
   async delete(numero_versement: string, userId: number): Promise<void> {
-    const versement = await this.prisma.versement.findUnique({
-      where: { numero_versement },
-    });
+    return await this.prisma.$transaction(async (tx) => {
+      const versement = await tx.versement.findUnique({
+        where: { numero_versement: numero_versement },
+      });
 
-    if (!versement) {
-      throw new NotFoundException(`Versement ${numero_versement} introuvable`);
-    }
+      if (!versement) {
+        throw new NotFoundException(
+          `Versement ${numero_versement} introuvable`,
+        );
+      }
 
-    await this.prisma.versement.delete({
-      where: { numero_versement },
+      await tx.client.update({
+        where: { numero_compte: versement.clientId },
+        data: {
+          solde: {
+            decrement: versement.montant,
+          },
+        },
+      });
+
+      await tx.versement.delete({
+        where: { numero_versement: numero_versement },
+      });
     });
   }
 }
