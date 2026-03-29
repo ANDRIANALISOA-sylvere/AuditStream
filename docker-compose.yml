@@ -16,6 +16,8 @@ services:
       FRONTEND_URL: http://localhost:5173
     depends_on:
       - db
+    volumes:
+    - ./prisma:/app/prisma
 
   db:
     image: postgres:16
