@@ -53,3 +53,8 @@ export interface ApiError {
   statusCode: number;
   error?: string;
 }
+
+export interface EmailLoginResponse {
+  accessToken: string;
+  user: User;
+}

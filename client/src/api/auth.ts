@@ -1,10 +1,25 @@
-import type { GoogleLoginResponse, User } from '@/types/auth.types';
+import type {
+  GoogleLoginResponse,
+  EmailLoginResponse,
+  User,
+} from '@/types/auth.types';
 import api from './axios-config';
 
 export const GOOGLE_AUTH_URL = `${api.defaults.baseURL}/auth/google`;
 
 export const redirectToGoogle = () => {
   window.location.href = GOOGLE_AUTH_URL;
+};
+
+export const loginWithEmail = async (
+  email: string,
+  password: string,
+): Promise<EmailLoginResponse> => {
+  const response = await api.post<EmailLoginResponse>('/auth/login', {
+    email,
+    password,
+  });
+  return response.data;
 };
 
 export const handleGoogleCallback = async (
