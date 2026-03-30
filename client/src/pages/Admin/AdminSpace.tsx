@@ -459,7 +459,7 @@ const AdminSpace: React.FC = () => {
                           <td className="py-3 px-4 text-gray-600">
                             {format(new Date(log.date_operation), 'dd/MM/yyyy HH:mm')}
                           </td>
-                          <td className="py-3 px-4 font-mono text-xs">{log.versementId ?? '—'}</td>
+                          <td className="py-3 px-4 font-mono text-xs">{log.numero_versement_archive ?? '—'}</td>
                           <td className="py-3 px-4 font-mono text-xs">
                             {log.numero_compte ? `${log.numero_compte.slice(0, 10)}...` : '—'}
                           </td>

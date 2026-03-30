@@ -54,6 +54,7 @@ model Audit_Versement {
 
   client        Client? @relation(fields: [numero_compte], references: [numero_compte])
   numero_compte String?
+  numero_versement_archive String?
 
   nom_client      String
   montant_ancien  Decimal?

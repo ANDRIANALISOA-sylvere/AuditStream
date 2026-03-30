@@ -3,6 +3,7 @@ export interface AuditVersement {
   type_action: 'INSERT' | 'UPDATE' | 'DELETE';
   date_operation: string;
   versementId: string | null;
+  numero_versement_archive: string | null;
   numero_compte: string | null;
   nom_client: string;
   montant_ancien: number | null;
