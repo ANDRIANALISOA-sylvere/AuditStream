@@ -1,4 +1,12 @@
-import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 
@@ -15,20 +23,22 @@ export class AuthController {
   async googleAuthRedirect(@Req() req, @Res() res) {
     try {
       const result = await this.authService.googleLogin(req.user);
-
       const frontendUrl = process.env.FRONTEND_URL;
       const userData = encodeURIComponent(JSON.stringify(result.user));
-
       return res.redirect(
         `${frontendUrl}/auth/callback?token=${result.accessToken}&user=${userData}`,
       );
     } catch (error: any) {
       const frontendUrl = process.env.FRONTEND_URL;
       const errorMessage = encodeURIComponent(error.message);
-
       return res.redirect(
         `${frontendUrl}/auth/callback?error=unauthorized&message=${errorMessage}`,
       );
     }
+  }
+
+  @Post('/login')
+  async emailLogin(@Body() body: { email: string; password: string }) {
+    return this.authService.emailLogin(body.email, body.password);
   }
 }
