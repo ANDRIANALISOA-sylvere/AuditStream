@@ -14,7 +14,6 @@ import {
   Plus,
   RefreshCw,
   ChevronDown,
-  User,
   LogOut,
   Mail,
   MoreVertical,
@@ -24,7 +23,6 @@ import { useNavigate } from 'react-router';
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -227,16 +225,6 @@ const AdminSpace: React.FC = () => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem className="cursor-pointer">
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Mon profil</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-
-                  <DropdownMenuSeparator />
-
                   <DropdownMenuItem
                     className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
                     onClick={handleLogout}
@@ -258,7 +246,7 @@ const AdminSpace: React.FC = () => {
             Tableau de bord supervision
           </h1>
           <p className="text-sm text-gray-500">
-            Surveillance en temps réel des opérations de versement
+            Surveillance des opérations de versement
           </p>
         </div>
 
@@ -268,7 +256,7 @@ const AdminSpace: React.FC = () => {
             <TabsList>
               <TabsTrigger value="audit" className="flex items-center">
                 <Activity className="w-4 h-4 mr-2" />
-                Audit trail
+                Audit Versement
               </TabsTrigger>
               <TabsTrigger value="clients" className="flex items-center">
                 <Users className="w-4 h-4 mr-2" />
@@ -277,25 +265,34 @@ const AdminSpace: React.FC = () => {
             </TabsList>
           </Tabs>
 
-          <div className="flex items-center space-x-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                placeholder="Rechercher un utilisateur..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 pr-4 py-1 h-9 w-64 text-sm"
-              />
+          {selectedTab === 'clients' && (
+            <div className="flex items-center space-x-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  placeholder="Rechercher un utilisateur..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 pr-4 py-1 h-9 w-64 text-sm"
+                />
+              </div>
+              <Button variant="outline" size="sm" onClick={() => fetchUsers()}>
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Actualiser
+              </Button>
+              <Button size="sm" onClick={() => setDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Ajouter
+              </Button>
             </div>
-            <Button variant="outline" size="sm" onClick={() => fetchUsers()}>
+          )}
+
+          {selectedTab === 'audit' && (
+            <Button variant="outline" size="sm" onClick={() => fetchAudits()}>
               <RefreshCw className="w-4 h-4 mr-2" />
               Actualiser
             </Button>
-            <Button size="sm" onClick={() => setDialogOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Ajouter
-            </Button>
-          </div>
+          )}
         </div>
 
         {/* Contenu des tabs */}
@@ -423,13 +420,6 @@ const AdminSpace: React.FC = () => {
                 <CardTitle className="text-lg">
                   Journal d'audit des versements
                 </CardTitle>
-                <Badge variant="outline" className="bg-gray-50">
-                  Temps réel
-                  <span className="ml-2 relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                  </span>
-                </Badge>
               </div>
             </CardHeader>
             <CardContent>
@@ -461,7 +451,7 @@ const AdminSpace: React.FC = () => {
                           </td>
                           <td className="py-3 px-4 font-mono text-xs">{log.numero_versement_archive ?? '—'}</td>
                           <td className="py-3 px-4 font-mono text-xs">
-                            {log.numero_compte ? `${log.numero_compte.slice(0, 10)}...` : '—'}
+                            {log.numero_compte ? `${log.numero_compte}` : '—'}
                           </td>
                           <td className="py-3 px-4">{log.nom_client}</td>
                           <td className="py-3 px-4 text-right text-gray-500">
