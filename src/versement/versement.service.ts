@@ -12,11 +12,16 @@ export class VersementService {
   async getAll(): Promise<Versement[]> {
     return await this.prisma.versement.findMany({
       include: { client: true },
+      orderBy: { createdAt: 'desc' },
     });
   }
 
   async create(dto: CreateVersementDto, userId: number): Promise<Versement> {
     return await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe(
+        `SET LOCAL "app.current_user_id" = '${userId}'`,
+      );
+
       const client = await tx.client.findUnique({
         where: { numero_compte: dto.clientId },
       });
@@ -53,6 +58,9 @@ export class VersementService {
     userId: number,
   ): Promise<Versement> {
     return await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe(
+        `SET LOCAL "app.current_user_id" = '${userId}'`,
+      );
       const versement = await tx.versement.findUnique({
         where: { numero_versement: numero_versement },
       });
@@ -87,6 +95,9 @@ export class VersementService {
 
   async delete(numero_versement: string, userId: number): Promise<void> {
     return await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe(
+        `SET LOCAL "app.current_user_id" = '${userId}'`,
+      );
       const versement = await tx.versement.findUnique({
         where: { numero_versement: numero_versement },
       });
@@ -109,6 +120,25 @@ export class VersementService {
       await tx.versement.delete({
         where: { numero_versement: numero_versement },
       });
+    });
+  }
+
+  async getAllAudits() {
+    return await this.prisma.audit_Versement.findMany({
+      include: {
+        versement: true,
+        client: true,
+        user: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        date_operation: 'desc',
+      },
     });
   }
 }

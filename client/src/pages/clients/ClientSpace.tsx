@@ -14,7 +14,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   CreditCard,
-  Users,
   Search,
   User,
   LogOut,
@@ -155,20 +154,6 @@ const ClientSpace: React.FC = () => {
         .includes(searchVersement.toLowerCase()),
   );
 
-  const stats = {
-    total: clients.length,
-    soldeTotal: clients.reduce((sum, c) => sum + (Number(c.solde) || 0), 0),
-    soldeMoyen:
-      clients.length > 0
-        ? clients.reduce((sum, c) => sum + (Number(c.solde) || 0), 0) /
-        clients.length
-        : 0,
-    totalVersements: versements.length,
-    montantTotal: versements.reduce(
-      (sum, v) => sum + (Number(v.montant) || 0),
-      0,
-    ),
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -238,84 +223,11 @@ const ClientSpace: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-gray-900">
-            Tableau de bord
+            Gestion des versements
           </h1>
           <p className="text-sm text-gray-500">
             Gérez vos versements et clients bancaires
           </p>
-        </div>
-
-        {/* Statistiques */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Total versements</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {stats.totalVersements}
-                  </p>
-                  <p className="text-xs text-blue-600 mt-1">Enregistrés</p>
-                </div>
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <CreditCard className="w-5 h-5 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Montant total</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {stats.montantTotal.toLocaleString('fr-FR')} Ar
-                  </p>
-                  <p className="text-xs text-green-600 mt-1">Versements</p>
-                </div>
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <CreditCard className="w-5 h-5 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Total clients</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {stats.total}
-                  </p>
-                  <p className="text-xs text-purple-600 mt-1">Actifs</p>
-                </div>
-                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                  <Users className="w-5 h-5 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Solde total</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {stats.soldeTotal.toLocaleString('fr-FR')} Ar
-                  </p>
-                  <p className="text-xs text-orange-600 mt-1">
-                    Moy: {stats.soldeMoyen.toLocaleString('fr-FR')} Ar
-                  </p>
-                </div>
-                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                  <Building className="w-5 h-5 text-orange-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Onglets — Versements en premier */}

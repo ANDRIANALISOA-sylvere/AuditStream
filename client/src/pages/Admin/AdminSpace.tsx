@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import {
   Search,
   Users,
-  CreditCard,
   Activity,
   AlertTriangle,
   Trash2,
@@ -44,9 +43,12 @@ import { useUserStore } from '@/store/userStore';
 import { Role } from '@/types/auth.types';
 import { UserDialog } from '@/components/common/UserDialog';
 import { AvatarWithFallback } from '@/components/common/AvatarWithFallback';
+import { useAuditStore } from '@/store/auditStore';
+import { format } from 'date-fns';
+
 
 const AdminSpace: React.FC = () => {
-  const [selectedTab, setSelectedTab] = useState('clients');
+  const [selectedTab, setSelectedTab] = useState('audit');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
@@ -62,7 +64,11 @@ const AdminSpace: React.FC = () => {
     updateUserRole,
   } = useUserStore();
 
+  const { audits, fetchAudits, isLoading: auditsLoading } = useAuditStore();
+
+
   useEffect(() => {
+    fetchAudits();
     fetchUsers();
   }, []);
 
@@ -72,119 +78,14 @@ const AdminSpace: React.FC = () => {
       u.email.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
-  const auditLogs = [
-    {
-      id: 1,
-      type_action: 'INSERT',
-      date_operation: '2026-02-26 14:23:15',
-      n_versement: 'V2025022601',
-      n_compte: 'FR76 3000 4001 2300 0012 3456 789',
-      nom_client: 'Jean Dupont',
-      montant_ancien: null,
-      montant_nouv: 1500.0,
-      utilisateur: 'jean.dupont@email.com',
-    },
-    {
-      id: 2,
-      type_action: 'UPDATE',
-      date_operation: '2026-02-26 11:05:32',
-      n_versement: 'V2025022503',
-      n_compte: 'FR76 3000 4001 2300 0012 3456 790',
-      nom_client: 'Marie Martin',
-      montant_ancien: 750.0,
-      montant_nouv: 800.0,
-      utilisateur: 'marie.martin@email.com',
-    },
-    {
-      id: 3,
-      type_action: 'DELETE',
-      date_operation: '2026-02-25 09:47:21',
-      n_versement: 'V2025022408',
-      n_compte: 'FR76 3000 4001 2300 0012 3456 791',
-      nom_client: 'Pierre Bernard',
-      montant_ancien: 200.0,
-      montant_nouv: null,
-      utilisateur: 'pierre.bernard@email.com',
-    },
-    {
-      id: 4,
-      type_action: 'INSERT',
-      date_operation: '2026-02-25 08:12:05',
-      n_versement: 'V2025022509',
-      n_compte: 'FR76 3000 4001 2300 0012 3456 789',
-      nom_client: 'Jean Dupont',
-      montant_ancien: null,
-      montant_nouv: 320.5,
-      utilisateur: 'jean.dupont@email.com',
-    },
-    {
-      id: 5,
-      type_action: 'UPDATE',
-      date_operation: '2026-02-24 16:38:44',
-      n_versement: 'V2025022405',
-      n_compte: 'FR76 3000 4001 2300 0012 3456 792',
-      nom_client: 'Sophie Dubois',
-      montant_ancien: 1200.0,
-      montant_nouv: 1350.0,
-      utilisateur: 'sophie.dubois@email.com',
-    },
-  ];
-
-  const auditStats = {
-    insertions: auditLogs.filter((log) => log.type_action === 'INSERT').length,
-    modifications: auditLogs.filter((log) => log.type_action === 'UPDATE')
-      .length,
-    suppressions: auditLogs.filter((log) => log.type_action === 'DELETE')
-      .length,
-  };
-
-  const versements = [
-    {
-      id: 1,
-      numero: 'V2025022601',
-      cheque: 'CHQ123456',
-      compte: 'FR76 3000 4001 2300 0012 3456 789',
-      montant: 1500.0,
-      date: '2026-02-26',
-    },
-    {
-      id: 2,
-      numero: 'V2025022602',
-      cheque: 'CHQ123457',
-      compte: 'FR76 3000 4001 2300 0012 3456 790',
-      montant: 750.0,
-      date: '2026-02-26',
-    },
-    {
-      id: 3,
-      numero: 'V2025022503',
-      cheque: 'CHQ123458',
-      compte: 'FR76 3000 4001 2300 0012 3456 789',
-      montant: 320.5,
-      date: '2026-02-25',
-    },
-  ];
-
   const getActionBadge = (action: string) => {
     switch (action) {
       case 'INSERT':
-        return (
-          <Badge className="bg-green-100 text-green-700 border-green-200">
-            INSERT
-          </Badge>
-        );
+        return <Badge className="bg-green-100 text-green-700 border-green-200">AJOUT</Badge>;
       case 'UPDATE':
-        return (
-          <Badge className="bg-blue-100 text-blue-700 border-blue-200">
-            UPDATE
-          </Badge>
-        );
+        return <Badge className="bg-blue-100 text-blue-700 border-blue-200">MODIFICATION</Badge>;
       case 'DELETE':
-        return (
-          <Badge className="bg-red-100 text-red-700 border-red-200">
-            DELETE
-          </Badge>
-        );
+        return <Badge className="bg-red-100 text-red-700 border-red-200">SUPPRESSION</Badge>;
       default:
         return <Badge variant="outline">{action}</Badge>;
     }
@@ -258,6 +159,12 @@ const AdminSpace: React.FC = () => {
       default:
         return 'Utilisateur';
     }
+  };
+
+  const auditStats = {
+    insertions: audits.filter((a) => a.type_action === 'INSERT').length,
+    modifications: audits.filter((a) => a.type_action === 'UPDATE').length,
+    suppressions: audits.filter((a) => a.type_action === 'DELETE').length,
   };
 
   return (
@@ -355,98 +262,17 @@ const AdminSpace: React.FC = () => {
           </p>
         </div>
 
-        {/* Statistiques */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Insertions</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {auditStats.insertions}
-                  </p>
-                  <p className="text-xs text-green-600 mt-1">+2 aujourd'hui</p>
-                </div>
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <Plus className="w-5 h-5 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Modifications</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {auditStats.modifications}
-                  </p>
-                  <p className="text-xs text-blue-600 mt-1">+1 aujourd'hui</p>
-                </div>
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Edit className="w-5 h-5 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Suppressions</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {auditStats.suppressions}
-                  </p>
-                  <p className="text-xs text-red-600 mt-1">+1 aujourd'hui</p>
-                </div>
-                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                  <Trash2 className="w-5 h-5 text-red-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">Utilisateurs</p>
-                  <p className="text-2xl font-semibold text-gray-900">
-                    {users.length}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {users.filter((u) => u.role === Role.ADMIN).length} admins
-                  </p>
-                </div>
-                <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                  <Users className="w-5 h-5 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
         {/* Tabs et filtres */}
         <div className="flex items-center justify-between mb-6">
-          <Tabs
-            value={selectedTab}
-            onValueChange={setSelectedTab}
-            className="w-auto"
-          >
+          <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-auto">
             <TabsList>
-              <TabsTrigger value="clients" className="flex items-center">
-                <Users className="w-4 h-4 mr-2" />
-                Utilisateurs ({users.length})
-              </TabsTrigger>
               <TabsTrigger value="audit" className="flex items-center">
                 <Activity className="w-4 h-4 mr-2" />
                 Audit trail
               </TabsTrigger>
-              <TabsTrigger value="versements" className="flex items-center">
-                <CreditCard className="w-4 h-4 mr-2" />
-                Versements
+              <TabsTrigger value="clients" className="flex items-center">
+                <Users className="w-4 h-4 mr-2" />
+                Utilisateurs ({users.length})
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -607,201 +433,82 @@ const AdminSpace: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 font-medium text-gray-500">
-                        Action
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-500">
-                        Date/Heure
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-500">
-                        N° Versement
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-500">
-                        N° Compte
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-500">
-                        Client
-                      </th>
-                      <th className="text-right py-3 px-4 font-medium text-gray-500">
-                        Ancien montant
-                      </th>
-                      <th className="text-right py-3 px-4 font-medium text-gray-500">
-                        Nouveau montant
-                      </th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-500">
-                        Utilisateur
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {auditLogs.map((log) => (
-                      <tr
-                        key={log.id}
-                        className="border-b border-gray-100 hover:bg-gray-50"
-                      >
-                        <td className="py-3 px-4">
-                          {getActionBadge(log.type_action)}
-                        </td>
-                        <td className="py-3 px-4 text-gray-600">
-                          {log.date_operation}
-                        </td>
-                        <td className="py-3 px-4 font-mono text-xs">
-                          {log.n_versement}
-                        </td>
-                        <td className="py-3 px-4 font-mono text-xs">
-                          {log.n_compte.slice(0, 10)}...
-                        </td>
-                        <td className="py-3 px-4">{log.nom_client}</td>
-                        <td className="py-3 px-4 text-right text-gray-500">
-                          {log.montant_ancien ? `${log.montant_ancien} €` : '-'}
-                        </td>
-                        <td className="py-3 px-4 text-right font-medium">
-                          {log.montant_nouv ? `${log.montant_nouv} €` : '-'}
-                        </td>
-                        <td className="py-3 px-4 text-gray-600">
-                          {log.utilisateur}
-                        </td>
+              {auditsLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left py-3 px-4 font-medium text-gray-500">Action</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-500">Date/Heure</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-500">N° Versement</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-500">N° Compte</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-500">Client</th>
+                        <th className="text-right py-3 px-4 font-medium text-gray-500">Ancien montant</th>
+                        <th className="text-right py-3 px-4 font-medium text-gray-500">Nouveau montant</th>
+                        <th className="text-left py-3 px-4 font-medium text-gray-500">Utilisateur</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {audits.map((log) => (
+                        <tr key={log.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-3 px-4">{getActionBadge(log.type_action)}</td>
+                          <td className="py-3 px-4 text-gray-600">
+                            {format(new Date(log.date_operation), 'dd/MM/yyyy HH:mm')}
+                          </td>
+                          <td className="py-3 px-4 font-mono text-xs">{log.versementId ?? '—'}</td>
+                          <td className="py-3 px-4 font-mono text-xs">
+                            {log.numero_compte ? `${log.numero_compte.slice(0, 10)}...` : '—'}
+                          </td>
+                          <td className="py-3 px-4">{log.nom_client}</td>
+                          <td className="py-3 px-4 text-right text-gray-500">
+                            {log.montant_ancien != null
+                              ? `${Number(log.montant_ancien).toLocaleString('fr-FR')} Ar`
+                              : '—'}
+                          </td>
+                          <td className="py-3 px-4 text-right font-medium">
+                            {log.montant_nouveau != null
+                              ? `${Number(log.montant_nouveau).toLocaleString('fr-FR')} Ar`
+                              : '—'}
+                          </td>
+                          <td className="py-3 px-4 text-gray-600">
+                            {log.user?.username ?? '—'}
+                          </td>
+                        </tr>
+                      ))}
+                      {audits.length === 0 && (
+                        <tr>
+                          <td colSpan={8} className="text-center py-8 text-gray-400">
+                            Aucune entrée d'audit
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              )}
 
               <div className="mt-6 pt-4 border-t border-gray-100">
                 <div className="flex items-center space-x-6">
                   <div className="flex items-center space-x-2">
-                    <Badge className="bg-green-100 text-green-700">
-                      INSERT
-                    </Badge>
-                    <span className="text-sm text-gray-600">
-                      {auditStats.insertions} opérations
-                    </span>
+                    <Badge className="bg-green-100 text-green-700">AJOUT</Badge>
+                    <span className="text-sm text-gray-600">{auditStats.insertions} opérations</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Badge className="bg-blue-100 text-blue-700">UPDATE</Badge>
-                    <span className="text-sm text-gray-600">
-                      {auditStats.modifications} opérations
-                    </span>
+                    <Badge className="bg-blue-100 text-blue-700">MODIFICATION</Badge>
+                    <span className="text-sm text-gray-600">{auditStats.modifications} opérations</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <Badge className="bg-red-100 text-red-700">DELETE</Badge>
-                    <span className="text-sm text-gray-600">
-                      {auditStats.suppressions} opérations
-                    </span>
+                    <Badge className="bg-red-100 text-red-700">SUPPRESSION</Badge>
+                    <span className="text-sm text-gray-600">{auditStats.suppressions} opérations</span>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-        )}
-
-        {selectedTab === 'versements' && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">Clients</CardTitle>
-                <Button variant="ghost" size="sm">
-                  Voir tout
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {[
-                    {
-                      id: 1,
-                      nom: 'Jean Dupont',
-                      compte: 'FR76 3000 4001 2300 0012 3456 789',
-                      solde: 12500.0,
-                      versements: 8,
-                    },
-                    {
-                      id: 2,
-                      nom: 'Marie Martin',
-                      compte: 'FR76 3000 4001 2300 0012 3456 790',
-                      solde: 3500.0,
-                      versements: 3,
-                    },
-                    {
-                      id: 3,
-                      nom: 'Pierre Bernard',
-                      compte: 'FR76 3000 4001 2300 0012 3456 791',
-                      solde: 8200.0,
-                      versements: 5,
-                    },
-                    {
-                      id: 4,
-                      nom: 'Sophie Dubois',
-                      compte: 'FR76 3000 4001 2300 0012 3456 792',
-                      solde: 4300.0,
-                      versements: 4,
-                    },
-                  ].map((client) => (
-                    <div
-                      key={client.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {client.nom}
-                        </p>
-                        <p className="text-xs text-gray-400 font-mono">
-                          {client.compte.slice(0, 10)}...
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-gray-900">
-                          {client.solde} €
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {client.versements} versements
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-lg">Versements récents</CardTitle>
-                <Button variant="ghost" size="sm">
-                  Voir tout
-                </Button>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {versements.map((versement) => (
-                    <div
-                      key={versement.id}
-                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {versement.numero}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          Chèque {versement.cheque}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-green-600">
-                          +{versement.montant} €
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {versement.date}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         )}
       </main>
 

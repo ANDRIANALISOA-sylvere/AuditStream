@@ -40,6 +40,12 @@ export class VersementController {
     return this.versementService.create(dto, user.sub);
   }
 
+  @Get('/audits')
+  @Roles(Role.ADMIN)
+  getAllAudits() {
+    return this.versementService.getAllAudits();
+  }
+
   @Patch('/:numero_versement')
   @Roles(Role.USER)
   update(
