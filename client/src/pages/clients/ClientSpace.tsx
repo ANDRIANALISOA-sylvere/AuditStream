@@ -34,6 +34,7 @@ import { AvatarWithFallback } from '@/components/common/AvatarWithFallback';
 import { VersementDialog } from '@/components/common/VersementDialog';
 import { EditVersementDialog } from '@/components/common/EditVersementDialog';
 import type { UpdateVersementDto, Versement } from '@/types/versement.types';
+import toast from 'react-hot-toast';
 
 const ClientSpace: React.FC = () => {
   const navigate = useNavigate();
@@ -105,6 +106,7 @@ const ClientSpace: React.FC = () => {
       await addVersement(data);
       await fetchClients();
       setVersementDialogOpen(false);
+      toast.success("Versement ajouté avec succès")
     } catch (error) {
       console.error('Error adding versement:', error);
     }
@@ -119,6 +121,7 @@ const ClientSpace: React.FC = () => {
       await fetchClients();
       setEditVersementOpen(false);
       setSelectedVersement(null);
+      toast.success("Versement mis à jour avec succès")
     } catch (error) {
       console.error('Error editing versement:', error);
     }
@@ -129,6 +132,7 @@ const ClientSpace: React.FC = () => {
       try {
         await removeVersement(numero_versement);
         await fetchClients();
+        toast.success("Versement supprimé avec succès")
       } catch (error) {
         console.error('Error deleting versement:', error);
       }
